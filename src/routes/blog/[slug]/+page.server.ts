@@ -1,4 +1,4 @@
-import { fail, type Actions } from '@sveltejs/kit';
+import { fail, type Actions, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { getPostDataQuery } from '../../../constans/queries';
 import { baseUrl, graphqlUrl } from '../../../constans/constans';
@@ -23,8 +23,8 @@ export const load = async ({ params }) => {
 const MAX_AUTHOR_LENGTH = 100;
 const MAX_CONTENT_LENGTH = 5000;
 
-// Posts as a Subscriber (no moderate_comments cap), so WP puts every comment into the manual-approval queue.
-const submitComment = async (request: Request) => {
+// Posts as a Subscriber (no moderate_comments cap), so WP moderation rules and Akismet still apply.
+const submitComment = async ({ request, url, getClientAddress }: RequestEvent) => {
   const formData = Object.fromEntries(await request.formData());
 
   // Honeypot: humans never see this field. Fake success so the bot doesn't retry.
@@ -47,6 +47,12 @@ const submitComment = async (request: Request) => {
     headers: {
       'Content-Type': 'application/json',
       Authorization: 'Basic ' + btoa(`${env.WP_COMMENTS_USER}:${env.WP_COMMENTS_APP_PASSWORD}`),
+      // Akismet reads IP/UA/referer from the request it receives, which here is Vercel's server, so every
+      // comment looks like a datacenter bot. Forward the commenter's real signals; a WP snippet maps
+      // X-Commenter-IP onto Akismet's user_ip.
+      'User-Agent': request.headers.get('user-agent') ?? '',
+      Referer: `${url.origin}${url.pathname}`,
+      'X-Commenter-IP': getClientAddress(),
     },
     body: JSON.stringify({ post: postId, parent, author_name: authorName, content }),
   });
@@ -56,6 +62,6 @@ const submitComment = async (request: Request) => {
 };
 
 export const actions: Actions = {
-  add_comment: ({ request }) => submitComment(request),
-  add_comment_response: ({ request }) => submitComment(request),
+  add_comment: submitComment,
+  add_comment_response: submitComment,
 };
