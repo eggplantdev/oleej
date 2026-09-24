@@ -268,7 +268,8 @@ fabric.properties
 .DS_Store
 
 .vercel
-!/notes.md
+/notes.md
+/notes.txt
 
 .build
 /build/
