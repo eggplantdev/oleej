@@ -28,7 +28,11 @@ const submitComment = async (request: Request) => {
   const formData = Object.fromEntries(await request.formData());
 
   // Honeypot: humans never see this field. Fake success so the bot doesn't retry.
-  if (formData.website) return { success: true };
+  // Meaningless name on purpose — Safari/Chrome autofill fills fields like "website".
+  if (formData.hp_x7) {
+    console.warn('comment honeypot triggered');
+    return { success: true };
+  }
 
   const postId = Number(formData.post_id);
   const parent = formData.parent ? Number(formData.parent) : undefined;

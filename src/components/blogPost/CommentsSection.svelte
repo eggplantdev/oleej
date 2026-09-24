@@ -63,7 +63,7 @@
   <form class="flex flex-col items-start gap-y-4" action="?/add_comment" method="POST" use:enhance="{handleSubmit}">
     <input type="hidden" name="post_id" value="{post_id}" />
     <div class="absolute -left-[9999px]" aria-hidden="true">
-      <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      <input type="text" name="hp_x7" tabindex="-1" autocomplete="off" />
     </div>
     <div class="grid w-full max-w-[600px] gap-y-1">
       <textarea

@@ -67,7 +67,7 @@
         <input type="hidden" name="post_id" value="{post_id}" />
         <input type="hidden" name="parent" value="{comment.databaseId}" />
         <div class="absolute -left-[9999px]" aria-hidden="true">
-          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+          <input type="text" name="hp_x7" tabindex="-1" autocomplete="off" />
         </div>
         <div class="grid w-full gap-y-1">
           <textarea
