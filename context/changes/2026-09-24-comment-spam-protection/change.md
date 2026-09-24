@@ -24,37 +24,50 @@ worktree: null
 
 ### Done in WordPress admin (2026-09-24)
 
-- [x] Settings → Discussion: "Comment must be manually approved" on; "Comment author must have
-      a previously approved comment" off.
-- [x] Spam comments removed.
-- [x] Code Snippets plugin → snippet "Block anonymous wp-comments-post.php"
-      (`pre_comment_on_post` → `wp_die(403)`). Verified: POST returns 403, nothing saved.
-      Anonymous REST and XML-RPC comments are off by WP default.
-- [x] Leaked admin application password revoked. Verified: REST auth returns 401.
-- [x] WP admin login password changed.
+- [x] Settings → Discussion: manual approval **off** (comments publish immediately); hold comments
+      with 1+ links; moderation words `casino`, `bet`, `slot`, `http`; both notification emails on.
+- [x] Spam comments marked as spam.
+- [x] Leaked admin application password revoked (verified 401). WP admin login password changed.
 - [x] seohost panel password rotated (by the hosting owner; not accessible to us).
+- [x] User `coments-bot` (sic; id 3, Subscriber) with an application password for the frontend.
+- [x] Code Snippets (all "Run everywhere"):
+  - **block bot comments**: `pre_comment_on_post` → `wp_die(403)`. Blocks anonymous
+    `wp-comments-post.php`, the original spam entry point. Anonymous REST and XML-RPC comments
+    are off by WP default.
+  - **allowed frontend comments**: `wp_is_comment_flood` → `false` for `coments-bot`. Every
+    frontend comment shares one WP user, so the per-user flood limit rejected real readers.
+  - **preprocess_comment**: removes Akismet's `rest_pre_insert_comment` and `preprocess_comment`
+    checks for `coments-bot`. Akismet sees Vercel's datacenter IP, a `node` UA and no email, and
+    flagged normal readers as spam. Snippet must hook `rest_pre_insert_comment`: REST comments
+    are checked there first.
+- Code Snippets' editor mangles pasted code (drops characters, auto-closes brackets) and
+  auto-deactivates a snippet on a syntax error. After pasting, compare line by line and check the
+  toggle is on.
 
 ### Done in code
 
 - `src/routes/blog/[slug]/+page.server.ts`: one `submitComment` helper for both actions; posts to
-  the live host (`baseUrl`); credentials from `WP_COMMENTS_USER` / `WP_COMMENTS_APP_PASSWORD`;
-  honeypot (`website` field) returns fake success; length validation; failures return `fail()`
-  so the form shows the error dialog.
+  the live host (`baseUrl`) as `coments-bot` via `WP_COMMENTS_USER` / `WP_COMMENTS_APP_PASSWORD`
+  (Vercel env, Production); honeypot `hp_x7` (not `website`, which Safari autofills) returns fake
+  success; length validation; failures return `fail(status)`. Forwards the reader's User-Agent,
+  a Referer and `X-Commenter-IP` so WP sees real signals (unused while Akismet is skipped).
 - GraphQL query + types: `databaseId` for post and comments; forms send numeric IDs.
-- Forms: hidden honeypot field; success shows "Komentarz pojawi się po zatwierdzeniu".
+- `Comments.svelte`: list is reactive, so a new comment shows without a reload.
+- Vercel: `engines.node` 22.x and adapter runtime `nodejs22.x` (the project was pinned to Node 18).
 - `notes.md` / `notes.txt` untracked and gitignored. They remain in public git history, so the
   credentials in them count as leaked for good.
 
+### Known behavior
+
+- WP rejects a comment identical to an existing one on the same post (409). All frontend
+  comments share `coments-bot`'s email, so this applies across different readers.
+
 ### Open
 
-- [ ] Create WP user `comments-bot` with the **Subscriber** role plus an application password.
-      Subscribers lack `moderate_comments`, so their comments go into the approval queue.
-- [ ] Set `WP_COMMENTS_USER` / `WP_COMMENTS_APP_PASSWORD` in `.env` and in Vercel env vars, then
-      redeploy.
-- [ ] Verify end-to-end: a comment from the blog lands in WP → Comments → Pending.
-- [ ] Confirm which inbox gets moderation emails (Settings → General → Administration Email
-      Address).
+- [ ] Frontend dialog still says "Komentarz pojawi się po zatwierdzeniu"; wrong now that comments
+      auto-publish.
+- [ ] Update WordPress to 7.1.2.
 - [ ] DB password rotation needs the hosting panel (the hosting owner). Low risk: MySQL is
       localhost-only.
-- [ ] Optional: Cloudflare Turnstile or a Vercel Firewall rate limit on POST `/blog/*`, if spam
-      starts coming through the frontend.
+- [ ] If spam gets through the frontend: Cloudflare Turnstile on the form, or a Vercel Firewall
+      rate limit on POST `/blog/*`.
