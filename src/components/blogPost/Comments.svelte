@@ -6,9 +6,10 @@
   import type { CommentType } from "../../types";
 
 
-  const comments: CommentType[] = $page.data.post.data.post.comments.nodes;
+  let comments: CommentType[];
+  $: comments = $page.data.post.data.post.comments.nodes;
   $: parentComments = comments.filter((comment) => !comment.parentId);
-  const post_id: number = $page.data.post.data.post.databaseId;
+  $: post_id = $page.data.post.data.post.databaseId;
   let commentsOpen = true;
   function toggleComments() {
     commentsOpen = !commentsOpen;
