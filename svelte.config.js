@@ -8,7 +8,8 @@ const config = {
       'source-map-js': 'source-map',
   },
   kit: {
-    adapter: adapter(),
+    // adapter-vercel 4.x only auto-detects Node 18/20; Vercel builds on newer Node.
+    adapter: adapter({ runtime: 'nodejs22.x' }),
     prerender: {
       handleHttpError: ({ path, referrer, message }) => {
         if (path === '/api/redirect' || path === '/api/sitemap.xml') {
