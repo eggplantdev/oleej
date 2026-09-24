@@ -12,8 +12,6 @@
   let dialog: HTMLDialogElement;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const errorMessage = 'oj coś nie pykło..., spróbuj jeszcze raz lub zgłoś problem: piotrolej@gmail.com';
-  const pendingMessage = 'Dzięki! Komentarz pojawi się po zatwierdzeniu.';
-  let message = errorMessage;
 
   let name = '';
   let content = '';
@@ -31,15 +29,13 @@
         await update({ reset: false });
         name = '';
         content = '';
-        message = pendingMessage;
       } else {
-        message = errorMessage;
+        dialog.show();
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          dialog.close();
+        }, 3000);
       }
-      dialog.show();
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        dialog.close();
-      }, 3000);
       sendingForm.set(false);
     };
   }
@@ -105,6 +101,6 @@
   bind:this="{dialog}"
 >
   <p>
-    {message}
+    {errorMessage}
   </p>
 </dialog>

@@ -64,8 +64,6 @@ worktree: null
 
 ### Open
 
-- [ ] Frontend dialog still says "Komentarz pojawi się po zatwierdzeniu"; wrong now that comments
-      auto-publish.
 - [ ] Update WordPress to 7.1.2.
 - [ ] DB password rotation needs the hosting panel (the hosting owner). Low risk: MySQL is
       localhost-only.
