@@ -28,6 +28,7 @@ export type PostResponse = {
 
 export type PostType = {
   id: string;
+  databaseId: number;
   title: string;
   slug: string;
   date: string;
@@ -48,6 +49,7 @@ export type PostType = {
 export type CommentType = {
   parentId: number;
   id: number;
+  databaseId: number;
   content: string;
   author: {
     node: {

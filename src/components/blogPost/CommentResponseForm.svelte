@@ -16,7 +16,9 @@
   let value = 'item-1';
   let dialog: HTMLDialogElement;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  let message = 'oj coś nie pykło..., spróbuj jeszcze raz lub zgłoś problem: piotrolej@gmail.com';
+  const errorMessage = 'oj coś nie pykło..., spróbuj jeszcze raz lub zgłoś problem: piotrolej@gmail.com';
+  const pendingMessage = 'Dzięki! Komentarz pojawi się po zatwierdzeniu.';
+  let message = errorMessage;
 
   function handleSubmit() {
     return async ({
@@ -30,17 +32,18 @@
       value = '';
       if (result.type === 'success') {
         await update({ reset: false });
-        console.log(result);
         sendingForm.set(false);
         content = '';
         sign = '';
+        message = pendingMessage;
       } else {
-        dialog.show();
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          dialog.close();
-        }, 1000);
+        message = errorMessage;
       }
+      dialog.show();
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        dialog.close();
+      }, 3000);
       sendingForm.set(false);
     };
   }
@@ -62,7 +65,10 @@
         use:enhance="{handleSubmit}"
       >
         <input type="hidden" name="post_id" value="{post_id}" />
-        <input type="hidden" name="parent" value="{comment.id}" />
+        <input type="hidden" name="parent" value="{comment.databaseId}" />
+        <div class="absolute -left-[9999px]" aria-hidden="true">
+          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
         <div class="grid w-full gap-y-1">
           <textarea
             on:focus="{() => sendingForm.set(false)}"

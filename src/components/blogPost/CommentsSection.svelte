@@ -7,11 +7,13 @@
   import type { ActionResult } from '@sveltejs/kit';
   import Spinner from '../Spinner.svelte';
 
-  const post_id: number = $page.data.post.id;
+  const post_id: number = $page.data.post.data.post.databaseId;
 
   let dialog: HTMLDialogElement;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  let message = 'oj coś nie pykło..., spróbuj jeszcze raz lub zgłoś problem: piotrolej@gmail.com';
+  const errorMessage = 'oj coś nie pykło..., spróbuj jeszcze raz lub zgłoś problem: piotrolej@gmail.com';
+  const pendingMessage = 'Dzięki! Komentarz pojawi się po zatwierdzeniu.';
+  let message = errorMessage;
 
   let name = '';
   let content = '';
@@ -27,16 +29,17 @@
       sendingForm.set(true);
       if (result.type === 'success') {
         await update({ reset: false });
-        console.log(result);
         name = '';
         content = '';
+        message = pendingMessage;
       } else {
-        dialog.show();
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          dialog.close();
-        }, 1000);
+        message = errorMessage;
       }
+      dialog.show();
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        dialog.close();
+      }, 3000);
       sendingForm.set(false);
     };
   }
@@ -59,6 +62,9 @@
   </div>
   <form class="flex flex-col items-start gap-y-4" action="?/add_comment" method="POST" use:enhance="{handleSubmit}">
     <input type="hidden" name="post_id" value="{post_id}" />
+    <div class="absolute -left-[9999px]" aria-hidden="true">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" />
+    </div>
     <div class="grid w-full max-w-[600px] gap-y-1">
       <textarea
         on:focus="{() => sendingForm.set(false)}"

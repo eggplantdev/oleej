@@ -3,6 +3,7 @@ export const getPostDataQuery = (slug: string) => {
   {
     post(id: "${slug}", idType: SLUG) {
       id
+      databaseId
       title
       slug
       date
@@ -10,6 +11,7 @@ export const getPostDataQuery = (slug: string) => {
         nodes {
           parentId
           id
+          databaseId
           content
           author{
             node{

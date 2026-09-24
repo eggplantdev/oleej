@@ -8,7 +8,7 @@
 
   const comments: CommentType[] = $page.data.post.data.post.comments.nodes;
   $: parentComments = comments.filter((comment) => !comment.parentId);
-  const post_id: number = $page.data.post.id;
+  const post_id: number = $page.data.post.data.post.databaseId;
   let commentsOpen = true;
   function toggleComments() {
     commentsOpen = !commentsOpen;

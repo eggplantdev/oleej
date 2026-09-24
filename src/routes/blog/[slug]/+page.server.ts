@@ -1,6 +1,7 @@
-import { type Actions } from '@sveltejs/kit';
+import { fail, type Actions } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { getPostDataQuery } from '../../../constans/queries';
-import { graphqlUrl } from '../../../constans/constans';
+import { baseUrl, graphqlUrl } from '../../../constans/constans';
 
 export const load = async ({ params }) => {
   const postDataQuery = getPostDataQuery(params.slug);
@@ -19,75 +20,38 @@ export const load = async ({ params }) => {
   };
 };
 
+const MAX_AUTHOR_LENGTH = 100;
+const MAX_CONTENT_LENGTH = 5000;
+
+// Posts as a Subscriber (no moderate_comments cap), so WP puts every comment into the manual-approval queue.
+const submitComment = async (request: Request) => {
+  const formData = Object.fromEntries(await request.formData());
+
+  // Honeypot: humans never see this field. Fake success so the bot doesn't retry.
+  if (formData.website) return { success: true };
+
+  const postId = Number(formData.post_id);
+  const parent = formData.parent ? Number(formData.parent) : undefined;
+  const authorName = String(formData.author_name ?? '').trim();
+  const content = String(formData.content ?? '').trim();
+
+  if (!postId || !authorName || !content) return fail(400);
+  if (authorName.length > MAX_AUTHOR_LENGTH || content.length > MAX_CONTENT_LENGTH) return fail(400);
+
+  const response = await fetch(`${baseUrl}comments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Basic ' + btoa(`${env.WP_COMMENTS_USER}:${env.WP_COMMENTS_APP_PASSWORD}`),
+    },
+    body: JSON.stringify({ post: postId, parent, author_name: authorName, content }),
+  });
+
+  if (!response.ok) return fail(response.status);
+  return { success: true };
+};
+
 export const actions: Actions = {
-  add_comment: async ({ request }) => {
-    const user = 'admin';
-    const pass = '1wO8 OTFJ Vn4e Ex2e TTLd 2B5Q';
-
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      Authorization: 'Basic ' + btoa(user + ':' + pass),
-    });
-
-    const formData = Object.fromEntries(await request.formData());
-    const postId = formData.post_id as string;
-    const authorName = formData.author_name as string;
-    const content = formData.content as string;
-
-    // console.log('formData: ', formData);
-    const response = await fetch('https://serwer2304048.home.pl/wordpress/wp-json/wp/v2/comments', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        post: postId,
-        author_name: authorName,
-        content: content,
-      }),
-    });
-
-    if (!response.ok) {
-      return response.statusText;
-      // throw new Error('Failed to submit comment');
-      // console.log('response: ', response);
-      // return response;
-    }
-    return response.statusText;
-    // return response;
-  },
-  add_comment_response: async ({ request }) => {
-    const user = 'admin';
-    const pass = '1wO8 OTFJ Vn4e Ex2e TTLd 2B5Q';
-
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      Authorization: 'Basic ' + btoa(user + ':' + pass),
-    });
-
-    const formData = Object.fromEntries(await request.formData());
-    const postId = formData.post_id as string;
-    const authorName = formData.author_name as string;
-    const content = formData.content as string;
-    const parent = formData.parent as string;
-
-    // console.log('formData: ', formData);
-    const response = await fetch('https://serwer2304048.home.pl/wordpress/wp-json/wp/v2/comments', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({
-        post: postId,
-        author_name: authorName,
-        content: content,
-        parent: parent,
-      }),
-    });
-
-    if (!response.ok) {
-      return response.statusText;
-      // throw new Error('Failed to submit comment');
-      // console.log('response: ', response);
-      // return response;
-    }
-    return response.statusText;
-    // return response;
-  },
+  add_comment: ({ request }) => submitComment(request),
+  add_comment_response: ({ request }) => submitComment(request),
 };
