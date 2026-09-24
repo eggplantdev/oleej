@@ -7,8 +7,8 @@
   export let post_id: number;
   export let comment: CommentType;
   export let responses: CommentType[];
-  const name = comment.author.node.name;
-  const content = comment.content;
+  $: name = comment.author.node.name;
+  $: content = comment.content;
 </script>
 
 <div in:fade="{{ duration: 500 }}">
@@ -39,12 +39,12 @@
                   <div class="aspect-square w-[20px] grow-0 bg-[#D9D9D9] md:w-[33px]"></div>
                   <div class="flex h-[33px] items-center text-[1rem] font-bold">
                     <span>
-                      {name}
+                      {response.author.node.name}
                     </span>
                   </div>
                 </div>
                 <div>
-                  <div class="mt-2 text-[0.875rem] md:text-[1.25rem]">{@html content}</div>
+                  <div class="mt-2 text-[0.875rem] md:text-[1.25rem]">{@html response.content}</div>
                 </div>
               </div>
             {/each}
